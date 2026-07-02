@@ -1,0 +1,48 @@
+start_zone:
+  name: Uruchom sekcje
+  description: Uruchamia lokalnie sekcje RC2 na podany czas i wymaga potwierdzenia sterownika.
+  fields:
+    station_entity:
+      name: Sekcja
+      description: Przelacznik sekcji z integracji Rain Bird RC2.
+      required: true
+      selector:
+        entity:
+          filter:
+            - integration: rainbird_rc2
+              domain: switch
+    duration:
+      name: Czas podlewania
+      description: Czas podlewania w minutach. Puste pole uzywa domyslnego czasu z integracji.
+      required: false
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 240
+          step: 1
+          unit_of_measurement: min
+
+stop_zone:
+  name: Zatrzymaj sekcje
+  description: Zatrzymuje lokalne podlewanie i wymaga potwierdzenia RC2.
+  fields:
+    station_entity:
+      name: Sekcja
+      required: true
+      selector:
+        entity:
+          filter:
+            - integration: rainbird_rc2
+              domain: switch
+
+stop_all:
+  name: Zatrzymaj wszystkie sekcje
+  description: Zatrzymuje wszystkie sekcje wskazanego sterownika RC2.
+  fields:
+    config_entry_id:
+      name: Sterownik
+      description: Wymagane tylko przy kilku skonfigurowanych sterownikach RC2.
+      selector:
+        config_entry:
+          integration: rainbird_rc2

@@ -1,0 +1,48 @@
+{
+  "title": "Rain Bird RC2",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Polacz lokalnie z Rain Bird RC2",
+        "description": "Podaj lokalny adres IP sterownika RC2 oraz PIN kontrolera. Integracja nie korzysta z chmury Rain Bird.",
+        "data": {
+          "local_host": "Adres IP lub nazwa hosta RC2",
+          "local_password": "PIN kontrolera",
+          "local_verify_ssl": "Weryfikuj certyfikat SSL"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Zaktualizuj lokalny PIN RC2",
+        "description": "Sterownik odrzucil zapisany PIN. Podaj aktualny adres i PIN.",
+        "data": {
+          "local_host": "Adres IP lub nazwa hosta RC2",
+          "local_password": "PIN kontrolera"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Nie mozna polaczyc sie lokalnie ze sterownikiem Rain Bird RC2.",
+      "invalid_auth": "Sterownik odrzucil podany PIN.",
+      "unknown": "Wystapil nieoczekiwany blad. Sprawdz log Home Assistant."
+    },
+    "abort": {
+      "already_configured": "Ten sterownik RC2 jest juz skonfigurowany.",
+      "reauth_successful": "Lokalny PIN zostal zaktualizowany."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ustawienia lokalne Rain Bird RC2",
+        "description": "Krotszy interwal szybciej aktualizuje stan sekcji, ale czesciej odpytuje sterownik w sieci LAN.",
+        "data": {
+          "default_duration": "Domyslny czas recznego podlewania (min)",
+          "local_host": "Adres IP lub nazwa hosta RC2",
+          "local_password": "Nowy PIN (puste = bez zmian)",
+          "local_verify_ssl": "Weryfikuj certyfikat SSL",
+          "scan_interval": "Odswiezanie stanu sekcji (s)"
+        }
+      }
+    }
+  }
+}

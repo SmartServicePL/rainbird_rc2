@@ -1,0 +1,48 @@
+{
+  "title": "Rain Bird RC2",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect locally to Rain Bird RC2",
+        "description": "Enter the RC2 local IP address and controller PIN. This integration does not use Rain Bird cloud services.",
+        "data": {
+          "local_host": "RC2 IP address or hostname",
+          "local_password": "Controller PIN",
+          "local_verify_ssl": "Verify SSL certificate"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Update the local RC2 PIN",
+        "description": "The controller rejected the saved PIN. Enter the current address and PIN.",
+        "data": {
+          "local_host": "RC2 IP address or hostname",
+          "local_password": "Controller PIN"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect locally to the Rain Bird RC2.",
+      "invalid_auth": "The controller rejected the supplied PIN.",
+      "unknown": "Unexpected error. Check the Home Assistant log."
+    },
+    "abort": {
+      "already_configured": "This RC2 controller is already configured.",
+      "reauth_successful": "The local PIN was updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Rain Bird RC2 local settings",
+        "description": "Shorter intervals update station state faster but poll the controller more often over LAN.",
+        "data": {
+          "default_duration": "Default manual watering duration (min)",
+          "local_host": "RC2 IP address or hostname",
+          "local_password": "New PIN (blank = unchanged)",
+          "local_verify_ssl": "Verify SSL certificate",
+          "scan_interval": "Station state refresh interval (s)"
+        }
+      }
+    }
+  }
+}
