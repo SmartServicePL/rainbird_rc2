@@ -2,7 +2,7 @@
 
 ![Rain Bird RC2](custom_components/rainbird_rc2/brand/logo.png)
 
-[![Version](https://img.shields.io/badge/version-1.0.0-2ea44f.svg)](https://github.com/SmartServicePL/rainbird_rc2/releases)
+[![Version](https://img.shields.io/badge/version-1.0.1-2ea44f.svg)](https://github.com/SmartServicePL/rainbird_rc2/releases)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/)
 [![Donate via Revolut](https://img.shields.io/badge/Donate-Revolut-0666EB?style=flat)](https://revolut.me/smartserwis)
 
@@ -21,6 +21,13 @@ się bezpośrednio przez sieć LAN. Konto Rain Bird i chmura IQ4 nie są używan
 - lokalny sensor połączenia z diagnostyką,
 - przycisk ręcznego odświeżenia danych,
 - brak zbędnych sensorów programów, prognozy, alarmów i danych chmurowych.
+
+## Nowe w 1.0.1
+
+- zaktualizowano lokalny protokół do `pyrainbird 6.5.0`,
+- dodano poprawki zgodności ze sterownikami po aktualizacjach Rain Bird 2.x,
+- dodano poprawki szyfrowania i komunikacji dla nowszego firmware LNK2,
+- zachowano dotychczasowe encje, usługi i lokalne sterowanie LAN.
 
 ## Wymagania
 

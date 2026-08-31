@@ -1,10 +1,10 @@
 {
   "domain": "rainbird_rc2",
   "name": "Rain Bird RC2",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "documentation": "https://github.com/SmartServicePL/rainbird_rc2",
   "issue_tracker": "https://github.com/SmartServicePL/rainbird_rc2/issues",
-  "requirements": ["pyrainbird==6.0.1"],
+  "requirements": ["pyrainbird==6.5.0"],
   "dependencies": [],
   "codeowners": ["@SmartServicePL"],
   "integration_type": "hub",
