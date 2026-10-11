@@ -21,7 +21,7 @@ async def async_setup_entry(
 
 
 class RainBirdRefreshButton(RainBirdRC2Entity, ButtonEntity):
-    _attr_name = "Odśwież dane"
+    _attr_translation_key = "refresh"
     _attr_icon = "mdi:refresh"
 
     def __init__(self, runtime: dict, entry_id: str) -> None:

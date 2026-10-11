@@ -30,7 +30,7 @@ class RainBirdDefaultDurationNumber(RainBirdRC2Entity, NumberEntity):
     _attr_device_class = NumberDeviceClass.DURATION
     _attr_icon = "mdi:timer-outline"
     _attr_mode = NumberMode.BOX
-    _attr_name = "Domyślny czas ręcznego podlewania"
+    _attr_translation_key = "default_manual_duration"
     _attr_native_min_value = 1
     _attr_native_max_value = 240
     _attr_native_step = 1

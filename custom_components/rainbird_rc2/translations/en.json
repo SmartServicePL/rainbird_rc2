@@ -44,5 +44,22 @@
         }
       }
     }
+  },
+  "entity": {
+    "binary_sensor": {
+      "local_connection": {
+        "name": "Local connection"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Refresh data"
+      }
+    },
+    "number": {
+      "default_manual_duration": {
+        "name": "Default manual watering duration"
+      }
+    }
   }
 }

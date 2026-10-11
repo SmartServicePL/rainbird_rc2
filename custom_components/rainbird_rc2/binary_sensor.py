@@ -31,7 +31,7 @@ class RainBirdConnectionBinarySensor(RainBirdRC2Entity, BinarySensorEntity):
 
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_icon = "mdi:lan-connect"
-    _attr_name = "Polaczenie lokalne"
+    _attr_translation_key = "local_connection"
 
     def __init__(self, runtime: dict, entry_id: str) -> None:
         super().__init__(runtime["realtime"], entry_id)
