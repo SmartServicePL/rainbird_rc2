@@ -2,7 +2,7 @@
 
 ![Rain Bird RC2](custom_components/rainbird_rc2/brand/logo.png)
 
-[![Version](https://img.shields.io/badge/version-1.1.0-2ea44f.svg)](https://github.com/SmartServicePL/rainbird_rc2/releases)
+[![Version](https://img.shields.io/badge/version-1.1.1-2ea44f.svg)](https://github.com/SmartServicePL/rainbird_rc2/releases)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/)
 [![Donate via Revolut](https://img.shields.io/badge/Donate-Revolut-0666EB?style=flat)](https://revolut.me/smartserwis)
 
@@ -22,6 +22,11 @@ się bezpośrednio przez sieć LAN. Konto Rain Bird i chmura IQ4 nie są używan
 - przycisk ręcznego odświeżenia danych,
 - brak zbędnych sensorów programów, prognozy, alarmów i danych chmurowych.
 
+## Nowe w 1.1.1
+
+- `pyrainbird 6.6.0`, ta sama wersja co we wbudowanej integracji Rain Bird w Home Assistant 2026.10 (lokalny protokół RC2 bez zmian),
+- minimalna wersja Home Assistant to 2026.4: `pyrainbird` od wersji 6.5.0 wymaga `aiohttp` 3.13.5, którego starsze wydania Home Assistanta nie dopuszczają.
+
 ## Nowe w 1.1.0
 
 - zmiana PIN-u przez ponowne uwierzytelnienie działa poprawnie (nowy PIN nie jest zasłaniany starą kopią w opcjach),
@@ -40,7 +45,7 @@ się bezpośrednio przez sieć LAN. Konto Rain Bird i chmura IQ4 nie są używan
 
 ## Wymagania
 
-- Home Assistant 2025.1 lub nowszy,
+- Home Assistant 2026.4 lub nowszy,
 - Rain Bird RC2 dostępny z sieci Home Assistanta,
 - lokalny adres IP sterownika,
 - PIN kontrolera RC2.
