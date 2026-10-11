@@ -52,9 +52,10 @@ class RainBirdDefaultDurationNumber(RainBirdRC2Entity, NumberEntity):
         minutes = min(240, max(1, int(round(value))))
         options = dict(self._entry.options)
         options[CONF_DEFAULT_DURATION] = minutes
-        changed = self.hass.config_entries.async_update_entry(
+        self.hass.config_entries.async_update_entry(
             self._entry,
             options=options,
         )
-        if not changed:
-            self.async_write_ha_state()
+        # The entry is not reloaded for this option, so publish the new value
+        # now instead of waiting for the next controller poll.
+        self.async_write_ha_state()
