@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from .coordinator import RainBirdCoordinator
 from .exceptions import RainBirdAuthError, RainBirdConnectionError
 from .local_api import RainBirdLocalAPI
-from .run_history import RainBirdRunHistory
+from .run_history import STARTED_BY_HA, RainBirdRunHistory
 
 _LOGGER = logging.getLogger(__name__)
 _STOP_RETRY_DELAY = 5
@@ -76,9 +76,13 @@ class RainBirdRunManager:
         for station in (self._coordinator.data or {}).get("stations", []):
             station_id = int(station["id"])
             item = self._history.station(station_id)
-            if not item.get("is_running") or not item.get(
-                "planned_duration_minutes"
+            if (
+                not item.get("is_running")
+                or not item.get("planned_duration_minutes")
+                or item.get("started_by") != STARTED_BY_HA
             ):
+                # Only runs started by HA have an HA stop timer to restore.
+                # Controller programs keep their own duration on the RC2.
                 continue
             started = _parse_datetime(item.get("last_started"))
             if started is None:

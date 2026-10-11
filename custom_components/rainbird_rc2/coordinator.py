@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 from copy import deepcopy
+from datetime import datetime, timedelta
 import logging
+import time
 from typing import Any
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, STATUS_IDLE, STATUS_RUNNING
 from .exceptions import RainBirdAuthError
@@ -32,10 +36,12 @@ class RainBirdCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         run_history: RainBirdRunHistory,
         fallback_stations: list[dict[str, Any]] | None = None,
         serial_number: str | None = None,
+        config_entry: ConfigEntry | None = None,
     ) -> None:
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=f"{DOMAIN}_local",
             update_interval=timedelta(seconds=scan_interval),
         )
@@ -48,17 +54,20 @@ class RainBirdCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.available_zones = set(available_zones)
         self.run_history = run_history
         self.fallback_stations = fallback_stations or []
-        self._local_last_success: datetime | None = None
+        # Monotonic clock for relative timing: immune to DST and clock changes.
+        self._local_last_success: float | None = None
+        self._local_last_success_at: datetime | None = None
         self._local_last_active_zones: set[int] = set()
         self._local_consecutive_errors = 0
-        self._local_status_grace = timedelta(seconds=max(90, scan_interval * 4))
+        self._local_status_grace = float(max(90, scan_interval * 4))
         self._expected_terminal: int | None = None
-        self._expected_started: datetime | None = None
+        self._expected_started: float | None = None
+        self._auth_failed = False
 
     def set_expected_run(self, terminal: int, duration_minutes: int) -> None:
         """Publish an acknowledged run while RC2 is temporarily busy."""
         self._expected_terminal = int(terminal)
-        self._expected_started = datetime.now()
+        self._expected_started = time.monotonic()
         self._publish_expected_state(True)
 
     def clear_expected_run(self) -> None:
@@ -119,7 +128,7 @@ class RainBirdCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return stations
 
     def _fetch_data(self) -> dict[str, Any]:
-        now = datetime.now()
+        now = time.monotonic()
         local_reachable = False
         local_data_stale = False
         local_error: str | None = None
@@ -130,6 +139,7 @@ class RainBirdCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except RainBirdAuthError as err:
             local_error = str(err)
             self._local_consecutive_errors += 1
+            self._auth_failed = True
         except Exception as err:
             local_error = str(err)
             self._local_consecutive_errors += 1
@@ -146,14 +156,16 @@ class RainBirdCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 active_zones = set(self._local_last_active_zones)
         else:
             local_reachable = True
+            self._auth_failed = False
             self._local_last_success = now
+            self._local_last_success_at = dt_util.utcnow()
             self._local_last_active_zones = set(active_zones)
             self._local_consecutive_errors = 0
             if (
                 self._expected_terminal is not None
                 and self._expected_terminal not in active_zones
                 and self._expected_started is not None
-                and now - self._expected_started < timedelta(seconds=45)
+                and now - self._expected_started < 45
             ):
                 active_zones.add(self._expected_terminal)
             elif (
@@ -196,8 +208,8 @@ class RainBirdCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "localDataStale": local_data_stale,
                 "localConsecutiveErrors": self._local_consecutive_errors,
                 "localLastSuccess": (
-                    self._local_last_success.isoformat()
-                    if self._local_last_success
+                    self._local_last_success_at.isoformat()
+                    if self._local_last_success_at
                     else None
                 ),
                 "localError": local_error,
@@ -210,6 +222,9 @@ class RainBirdCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _async_update_data(self) -> dict[str, Any]:
         data = await self.hass.async_add_executor_job(self._fetch_data)
+        if self._auth_failed:
+            # Start the reauth flow instead of only counting errors.
+            raise ConfigEntryAuthFailed("Rain Bird RC2 rejected the local PIN")
         await self.run_history.async_sync_station_states(data["stations"])
         for station in data["stations"]:
             history = self.run_history.station(int(station["id"]))

@@ -11,6 +11,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
+from .exceptions import RainBirdAuthError, RainBirdConnectionError
 from .entity import (
     RainBirdRC2Entity,
     default_manual_duration,
@@ -121,12 +122,26 @@ class RainBirdStationSwitch(RainBirdRC2Entity, SwitchEntity):
         terminal = self._local_terminal()
         if terminal is None:
             raise HomeAssistantError("Local RC2 connection is not configured")
-        await self._runtime["run_manager"].async_start(
-            self._station_id,
-            terminal,
-            duration,
-        )
+        try:
+            await self._runtime["run_manager"].async_start(
+                self._station_id,
+                terminal,
+                duration,
+            )
+        except RainBirdAuthError as err:
+            raise HomeAssistantError(
+                f"Rain Bird RC2 rejected the local PIN: {err}"
+            ) from err
+        except RainBirdConnectionError as err:
+            raise HomeAssistantError(f"Rain Bird RC2 start failed: {err}") from err
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Stop the station."""
-        await self._runtime["run_manager"].async_stop(self._station_id)
+        try:
+            await self._runtime["run_manager"].async_stop(self._station_id)
+        except RainBirdAuthError as err:
+            raise HomeAssistantError(
+                f"Rain Bird RC2 rejected the local PIN: {err}"
+            ) from err
+        except RainBirdConnectionError as err:
+            raise HomeAssistantError(f"Rain Bird RC2 stop failed: {err}") from err

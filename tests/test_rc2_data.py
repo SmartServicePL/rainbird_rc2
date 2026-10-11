@@ -1,6 +1,6 @@
 """Focused tests for local RC2 state and station mapping."""
 
-from datetime import datetime, timedelta
+import time
 
 from custom_components.rainbird_rc2.coordinator import RainBirdCoordinator
 from custom_components.rainbird_rc2.entity import station_display_name
@@ -46,11 +46,13 @@ def _coordinator(responses) -> RainBirdCoordinator:
         {"id": 1002, "name": "Trawnik za domem", "terminal": 2},
     ]
     coordinator._local_last_success = None
+    coordinator._local_last_success_at = None
     coordinator._local_last_active_zones = set()
     coordinator._local_consecutive_errors = 0
-    coordinator._local_status_grace = timedelta(seconds=120)
+    coordinator._local_status_grace = 120.0
     coordinator._expected_terminal = None
     coordinator._expected_started = None
+    coordinator._auth_failed = False
     coordinator.data = None
     return coordinator
 
@@ -84,7 +86,7 @@ def test_expired_grace_marks_controller_offline_without_false_stop() -> None:
     coordinator = _coordinator([{1}, RuntimeError("network down")])
     first = coordinator._fetch_data()
     coordinator.data = first
-    coordinator._local_last_success = datetime.now() - timedelta(minutes=3)
+    coordinator._local_last_success = time.monotonic() - 180
 
     offline = coordinator._fetch_data()
 
@@ -96,7 +98,7 @@ def test_expired_grace_marks_controller_offline_without_false_stop() -> None:
 def test_expected_run_stays_available_while_rc2_is_busy() -> None:
     coordinator = _coordinator([RuntimeError("controller busy")])
     coordinator._expected_terminal = 1
-    coordinator._expected_started = datetime.now() - timedelta(minutes=2)
+    coordinator._expected_started = time.monotonic() - 120
 
     data = coordinator._fetch_data()
 
@@ -111,3 +113,23 @@ def test_station_display_name_uses_clean_section_fallback() -> None:
         station_display_name({"name": "Trawnik przed domem", "terminal": 1})
         == "Trawnik przed domem"
     )
+
+
+def test_rejected_pin_is_flagged_for_reauthentication() -> None:
+    from custom_components.rainbird_rc2.exceptions import RainBirdAuthError
+
+    coordinator = _coordinator([RainBirdAuthError("403")])
+
+    data = coordinator._fetch_data()
+
+    assert coordinator._auth_failed is True
+    assert data["connection"]["isConnected"] is False
+
+
+def test_successful_poll_clears_rejected_pin_flag() -> None:
+    coordinator = _coordinator([{1}])
+    coordinator._auth_failed = True
+
+    coordinator._fetch_data()
+
+    assert coordinator._auth_failed is False

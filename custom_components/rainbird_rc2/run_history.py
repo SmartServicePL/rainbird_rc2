@@ -11,6 +11,8 @@ from homeassistant.util import dt as dt_util
 from .const import DOMAIN
 
 STORAGE_VERSION = 1
+STARTED_BY_HA = "ha"
+STARTED_BY_CONTROLLER = "controller"
 
 
 class RainBirdRunHistory:
@@ -43,8 +45,11 @@ class RainBirdRunHistory:
         if not item.get("is_running"):
             item["last_started"] = dt_util.utcnow().isoformat()
         item["is_running"] = True
+        item["started_by"] = STARTED_BY_HA
         if duration_minutes is not None:
             item["planned_duration_minutes"] = int(duration_minutes)
+        else:
+            item.pop("planned_duration_minutes", None)
         self._stations[key] = item
         await self._store.async_save(self._stations)
 
@@ -79,8 +84,13 @@ class RainBirdRunHistory:
             is_running = bool(station.get("isRunning"))
 
             if is_running and not was_running:
+                # Started by the controller's own program or the Rain Bird app.
+                # A planned duration left from an older HA start must not be
+                # used to arm an HA stop timer for this run.
                 item["is_running"] = True
                 item["last_started"] = now.isoformat()
+                item["started_by"] = STARTED_BY_CONTROLLER
+                item.pop("planned_duration_minutes", None)
                 changed = True
             elif not is_running and was_running:
                 item["is_running"] = False

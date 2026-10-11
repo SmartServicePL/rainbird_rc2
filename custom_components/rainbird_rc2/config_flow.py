@@ -7,7 +7,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.config_entries import ConfigFlowResult
 
 from .const import (
     CONF_CONTROLLER_TYPE,
@@ -43,6 +43,15 @@ def _probe_local_rc2(
         api.close()
 
 
+def reauth_options(options: Any) -> dict[str, Any]:
+    """Return entry options without the connection settings replaced by reauth."""
+    return {
+        key: value
+        for key, value in dict(options).items()
+        if key not in (CONF_LOCAL_HOST, CONF_LOCAL_PASSWORD, CONF_LOCAL_VERIFY_SSL)
+    }
+
+
 def _entry_value(
     entry: config_entries.ConfigEntry,
     key: str,
@@ -62,7 +71,7 @@ class RainBirdRC2ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         errors: dict[str, str] = {}
         if user_input is not None:
             host = str(user_input[CONF_LOCAL_HOST]).strip()
@@ -114,7 +123,10 @@ class RainBirdRC2ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_reauth(self, entry_data: dict[str, Any]) -> FlowResult:
+    async def async_step_reauth(
+        self,
+        entry_data: dict[str, Any],
+    ) -> ConfigFlowResult:
         """Start local PIN renewal."""
         self._reauth_entry = self.hass.config_entries.async_get_entry(
             self.context["entry_id"]
@@ -124,7 +136,7 @@ class RainBirdRC2ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_reauth_confirm(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Validate and save a replacement local PIN."""
         errors: dict[str, str] = {}
         assert self._reauth_entry is not None
@@ -157,14 +169,14 @@ class RainBirdRC2ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data[CONF_LOCAL_HOST] = host
                 data[CONF_LOCAL_PASSWORD] = password
                 data[CONF_LOCAL_VERIFY_SSL] = verify_ssl
-                self.hass.config_entries.async_update_entry(
+                # Setup reads connection settings from options first, so the
+                # renewed PIN must not be shadowed by an old copy in options.
+                options = reauth_options(self._reauth_entry.options)
+                return self.async_update_reload_and_abort(
                     self._reauth_entry,
                     data=data,
+                    options=options,
                 )
-                await self.hass.config_entries.async_reload(
-                    self._reauth_entry.entry_id
-                )
-                return self.async_abort(reason="reauth_successful")
 
         return self.async_show_form(
             step_id="reauth_confirm",
@@ -193,7 +205,7 @@ class RainBirdRC2OptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(
         self,
         user_input: dict[str, Any] | None = None,
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         if user_input is not None:
             options = dict(user_input)
             password = str(options.get(CONF_LOCAL_PASSWORD, "")).strip()

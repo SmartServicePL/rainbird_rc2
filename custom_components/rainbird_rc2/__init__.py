@@ -36,6 +36,8 @@ from .local_api import RainBirdLocalAPI
 from .run_history import RainBirdRunHistory
 from .run_manager import RainBirdRunManager
 
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
 PLATFORMS = [
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
@@ -70,21 +72,50 @@ def _runtime_for_entry(hass: HomeAssistant, entry_id: str | None) -> dict[str, A
     return runtimes[0]
 
 
+def station_terminal(runtime: dict[str, Any], station_id: int) -> int | None:
+    """Return the RC2 terminal of a station from live data or registry fallbacks."""
+    realtime = runtime["realtime"]
+    sources = list((realtime.data or {}).get("stations", [])) + list(
+        getattr(realtime, "fallback_stations", []) or []
+    )
+    for station in sources:
+        try:
+            if int(station.get("id", -1)) == station_id and station.get(
+                "terminal"
+            ) is not None:
+                return int(station["terminal"])
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
 def _runtime_and_station_for_entity(
     hass: HomeAssistant,
     entity_id: str,
 ) -> tuple[dict[str, Any], int, int]:
-    state = hass.states.get(entity_id)
-    if state is None:
-        raise ServiceValidationError(f"Entity {entity_id} does not exist")
-    entry_id = state.attributes.get("config_entry_id")
-    station_id = state.attributes.get("station_id")
-    terminal = state.attributes.get("terminal")
-    if not entry_id or station_id is None or terminal is None:
+    """Resolve a station switch through the entity registry.
+
+    The registry is used instead of state attributes, so a stop command still
+    works while the station entity is temporarily unavailable.
+    """
+    entity_entry = er.async_get(hass).async_get(entity_id)
+    if entity_entry is None or entity_entry.platform != DOMAIN:
         raise ServiceValidationError(
-            f"Entity {entity_id} is not a compatible Rain Bird RC2 station entity"
+            f"Entity {entity_id} is not a Rain Bird RC2 station entity"
         )
-    return _runtime_for_entry(hass, str(entry_id)), int(station_id), int(terminal)
+    match = _STATION_ENTITY_RE.match(entity_entry.unique_id or "")
+    if match is None or match.group("kind") != "manual_switch":
+        raise ServiceValidationError(
+            f"Entity {entity_id} is not a Rain Bird RC2 station switch"
+        )
+    runtime = _runtime_for_entry(hass, entity_entry.config_entry_id)
+    station_id = int(match.group("station"))
+    terminal = station_terminal(runtime, station_id)
+    if terminal is None:
+        raise ServiceValidationError(
+            f"Rain Bird RC2 terminal for {entity_id} is not known yet"
+        )
+    return runtime, station_id, terminal
 
 
 def _station_fallbacks_from_registry(
@@ -323,6 +354,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         history,
         fallback_stations,
         serial_number,
+        config_entry=entry,
     )
     await realtime.async_config_entry_first_refresh()
     run_manager = RainBirdRunManager(
@@ -338,6 +370,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "realtime": realtime,
         "history": history,
         "run_manager": run_manager,
+        "connection_snapshot": connection_snapshot(entry),
     }
     await run_manager.async_resume_from_history()
     _cleanup_legacy_entities(hass, entry, controller_id)
@@ -346,7 +379,30 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+def connection_snapshot(entry: ConfigEntry) -> dict[str, Any]:
+    """Return the settings that require a new connection when changed."""
+    options = entry.options
+    return {
+        CONF_LOCAL_HOST: options.get(CONF_LOCAL_HOST)
+        or entry.data.get(CONF_LOCAL_HOST),
+        CONF_LOCAL_PASSWORD: options.get(CONF_LOCAL_PASSWORD)
+        or entry.data.get(CONF_LOCAL_PASSWORD),
+        CONF_LOCAL_VERIFY_SSL: options.get(
+            CONF_LOCAL_VERIFY_SSL, entry.data.get(CONF_LOCAL_VERIFY_SSL, False)
+        ),
+        CONF_SCAN_INTERVAL: options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+    }
+
+
 async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload only for connection changes.
+
+    A reload stops an HA-managed run, so changing the default manual duration
+    (read live from the options) must not reload the entry.
+    """
+    runtime = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+    if runtime and runtime.get("connection_snapshot") == connection_snapshot(entry):
+        return
     await hass.config_entries.async_reload(entry.entry_id)
 
 

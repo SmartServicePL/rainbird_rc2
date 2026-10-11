@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import logging
+import re
 import threading
 import time
 from typing import Any
+from urllib.parse import urlparse
+import warnings
 
 from pyrainbird import rainbird
 from pyrainbird.encryption import PayloadCoder
@@ -57,7 +60,17 @@ class RainBirdLocalAPI:
         self._session = self._new_session()
         self._request_lock = threading.Lock()
         if not verify_ssl:
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            # Silence the expected self-signed certificate warning only for this
+            # controller, not for every HTTPS client in the Home Assistant process.
+            host_name = urlparse(self._url).hostname or ""
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    "Unverified HTTPS request is being made to host "
+                    f"'{re.escape(host_name)}'"
+                ),
+                category=urllib3.exceptions.InsecureRequestWarning,
+            )
 
     @staticmethod
     def _new_session() -> requests.Session:
