@@ -1,0 +1,3 @@
+pytest
+pytest-homeassistant-custom-component
+pyrainbird==6.5.0

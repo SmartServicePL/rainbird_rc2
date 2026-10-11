@@ -1,14 +1,14 @@
 {
   "domain": "rainbird_rc2",
   "name": "Rain Bird RC2",
-  "version": "1.0.1",
-  "documentation": "https://github.com/SmartServicePL/rainbird_rc2",
-  "issue_tracker": "https://github.com/SmartServicePL/rainbird_rc2/issues",
-  "requirements": ["pyrainbird==6.5.0"],
-  "dependencies": [],
   "codeowners": ["@SmartServicePL"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/SmartServicePL/rainbird_rc2",
   "integration_type": "hub",
   "iot_class": "local_polling",
-  "config_flow": true,
-  "loggers": ["custom_components.rainbird_rc2"]
+  "issue_tracker": "https://github.com/SmartServicePL/rainbird_rc2/issues",
+  "loggers": ["pyrainbird"],
+  "requirements": ["pyrainbird==6.5.0"],
+  "version": "1.1.0"
 }

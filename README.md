@@ -2,7 +2,7 @@
 
 ![Rain Bird RC2](custom_components/rainbird_rc2/brand/logo.png)
 
-[![Version](https://img.shields.io/badge/version-1.0.1-2ea44f.svg)](https://github.com/SmartServicePL/rainbird_rc2/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-2ea44f.svg)](https://github.com/SmartServicePL/rainbird_rc2/releases)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/)
 [![Donate via Revolut](https://img.shields.io/badge/Donate-Revolut-0666EB?style=flat)](https://revolut.me/smartserwis)
 
@@ -21,6 +21,15 @@ się bezpośrednio przez sieć LAN. Konto Rain Bird i chmura IQ4 nie są używan
 - lokalny sensor połączenia z diagnostyką,
 - przycisk ręcznego odświeżenia danych,
 - brak zbędnych sensorów programów, prognozy, alarmów i danych chmurowych.
+
+## Nowe w 1.1.0
+
+- zmiana PIN-u przez ponowne uwierzytelnienie działa poprawnie (nowy PIN nie jest zasłaniany starą kopią w opcjach),
+- zmiana domyślnego czasu ręcznego podlewania nie przeładowuje integracji i nie zatrzymuje trwającego podlewania,
+- `rainbird_rc2.stop_zone` działa także wtedy, gdy encja sekcji jest chwilowo niedostępna,
+- program sterownika albo start z aplikacji Rain Bird nie jest zatrzymywany po przeładowaniu integracji,
+- odrzucony PIN uruchamia formularz ponownego uwierzytelnienia,
+- nazwy encji są tłumaczone (polski i angielski).
 
 ## Nowe w 1.0.1
 
