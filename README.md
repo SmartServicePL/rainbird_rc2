@@ -24,7 +24,7 @@ się bezpośrednio przez sieć LAN. Konto Rain Bird i chmura IQ4 nie są używan
 
 ## Nowe w 1.1.1
 
-- `pyrainbird 6.6.0`, ta sama wersja co we wbudowanej integracji Rain Bird w Home Assistant 2026.10 (lokalny protokół RC2 bez zmian),
+- `pyrainbird` co najmniej 6.6.0, czyli ta sama wersja co we wbudowanej integracji Rain Bird w Home Assistant 2026.10 (lokalny protokół RC2 bez zmian); integracja nie przypina już dokładnej wersji, więc korzysta z tej, którą ma Home Assistant,
 - minimalna wersja Home Assistant to 2026.4: `pyrainbird` od wersji 6.5.0 wymaga `aiohttp` 3.13.5, którego starsze wydania Home Assistanta nie dopuszczają.
 
 ## Nowe w 1.1.0
